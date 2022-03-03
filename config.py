@@ -19,7 +19,7 @@ audio = {
 tts_model = {
     "embedding_dim": 512,
     # Encoder
-    "encoder": {"n_conv_layers": 3, "n_conv_filters": 512, "kernel_size": 5, "conv_dropout": 0.5, "lstm_size": 512,},
+    "encoder": {"n_conv_layers": 3, "n_conv_filters": 512, "kernel_size": 5, "conv_dropout": 0.5, "blstm_size": 512,},
     # Dynamic convolutional attention
     "attention": {
         "attn_dim": 128,
