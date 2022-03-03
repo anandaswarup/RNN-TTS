@@ -2,6 +2,7 @@
 
 import torch.nn as nn
 import torch.nn.functional as F
+import torch
 
 
 class Linear(nn.Module):
@@ -22,8 +23,8 @@ class Linear(nn.Module):
         return self.linear_layer(x)
 
 
-class BatchNormConv(nn.Module):
-    """Convolution layer + Batch Normalization
+class ConvBatchNorm(nn.Module):
+    """Convolution layer + Batch Normalization + Activation + Dropout
     """
 
     def __init__(
@@ -35,9 +36,11 @@ class BatchNormConv(nn.Module):
         padding=None,
         dilation=1,
         bias=True,
+        dropout=0.5,
+        activation=None,
         w_init_gain="linear",
     ):
-        """Instantiate the layeer
+        """Instantiate the layer
         """
         super().__init__()
 
@@ -60,8 +63,17 @@ class BatchNormConv(nn.Module):
         # Batch normalization
         self.batch_norm = nn.BatchNorm1d(out_channels)
 
+        # Activation
+        self.activation = activation
+
+        # Dropout
+        self.dropout = dropout
+
     def forward(self, x):
         """Forward pass
         """
-        return self.batch_norm(self.conv_layer(x))
+        x = self.activation(self.batch_norm(self.conv_layer(x)))
+        x = F.dropout(x, p=self.dropout, training=self.training)
+
+        return x
 
