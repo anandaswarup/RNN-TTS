@@ -73,6 +73,10 @@ class DynamicConvolutionAttention(nn.Module):
 
     def forward(self, query, prev_alignment):
         """Forward pass
+
+            Args:
+                query: [B, query_dim]
+                prev_alignment: [B, T_enc]
         """
         alignment = self.compute_energies(query, prev_alignment)
         alignment = self.normalize_energies(alignment)
