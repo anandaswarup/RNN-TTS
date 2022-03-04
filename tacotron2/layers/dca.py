@@ -46,7 +46,9 @@ class DynamicConvolutionAttention(nn.Module):
     def compute_energies(self, query, prev_alignment):
         """Compute energies from the query
         """
-        p = F.conv1d(F.pad(prev_alignment.unsqueeze(1), (self.prior_filter_len - 1, 0)), self.prior.view(1, 1, -1))
+        p = F.conv1d(
+            F.pad(prev_alignment.unsqueeze(1), (self.prior_filter_len - 1, 0)), self.prior_filter.view(1, 1, -1)
+        )
         p = torch.log(p.clamp_min_(1e-6)).squeeze(1)
 
         G = self.V(torch.tanh(self.W(query)))
