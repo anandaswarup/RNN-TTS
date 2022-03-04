@@ -19,14 +19,20 @@ audio = {
 tts_model = {
     "embedding_dim": 512,
     # Encoder
-    "encoder": {"n_conv_layers": 3, "n_conv_filters": 512, "kernel_size": 5, "conv_dropout": 0.5, "blstm_size": 512,},
+    "encoder": {
+        "n_conv_layers": 3,
+        "n_conv_filters": 512,
+        "conv_filter_size": 5,
+        "conv_dropout": 0.5,
+        "blstm_size": 512,
+    },
     # Dynamic convolutional attention
     "attention": {
         "attn_dim": 128,
         "n_static_filters": 8,
-        "static_kernel_size": 21,
+        "static_filter_size": 21,
         "n_dynamic_filters": 8,
-        "dynamic_kernel_size": 21,
+        "dynamic_filter_size": 21,
         "prior_filter_len": 11,
         "alpha": 0.1,
         "beta": 0.9,
@@ -41,7 +47,7 @@ tts_model = {
         "reduction_factor": 2,
     },
     # Post Processing Network
-    "postnet": {"n_conv_layers": 5, "n_conv_filters": 512, "kernel_size": 5, "conv_dropout": 0.5,},
+    "postnet": {"n_conv_layers": 5, "n_conv_filters": 512, "conv_filter_size": 5, "conv_dropout": 0.5,},
 }
 
 tts_training = {
