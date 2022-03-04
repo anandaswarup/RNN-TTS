@@ -2,7 +2,6 @@
 
 import torch.nn as nn
 import torch.nn.functional as F
-import torch
 
 
 class Linear(nn.Module):
@@ -21,6 +20,34 @@ class Linear(nn.Module):
         """Forward pass
         """
         return self.linear_layer(x)
+
+
+class PreNet(nn.Module):
+    """Prenet (used in the decoder as an information bottleneck)
+    """
+
+    def __init__(self, in_dim, prenet_layers, prenet_dropout):
+        """Instantiate the PreNet
+        """
+        super().__init__()
+
+        layer_sizes = [in_dim] + prenet_layers
+        self.layers = nn.ModuleList(
+            [
+                Linear(in_size, out_size, bias=True, w_init_gain="relu")
+                for in_size, out_size in zip(layer_sizes, layer_sizes[1:])
+            ]
+        )
+
+        self.dropout = prenet_dropout
+
+    def forward(self, x):
+        """Forward pass
+        """
+        for layer in self.layers:
+            x = F.dropout(F.relu(layer(x)), p=self.dropout, training=True)
+
+        return x
 
 
 class ConvBatchNorm(nn.Module):
