@@ -43,8 +43,8 @@ class DynamicConvolutionAttention(nn.Module):
         self.T = nn.Linear(n_dynamic_filters, attn_dim)
         self.v = nn.Linear(attn_dim, 1, bias=False)
 
-    def compute_energies(self, query, prev_alignment):
-        """Compute energies from the query
+    def forward(self, query, prev_alignment):
+        """Forward pass
         """
         p = F.conv1d(
             F.pad(prev_alignment.unsqueeze(1), (self.prior_filter_len - 1, 0)), self.prior_filter.view(1, 1, -1)
@@ -64,23 +64,4 @@ class DynamicConvolutionAttention(nn.Module):
 
         energy = self.v(torch.tanh(self.U(f) + self.T(g))).squeeze(-1) + p
 
-        return energy
-
-    def normalize_energies(self, energies):
-        """Normalize the energies by converting to probabilities
-        """
-        alignment = F.softmax(energies, dim=1)
-
-        return alignment
-
-    def forward(self, query, prev_alignment):
-        """Forward pass
-
-            Args:
-                query: [B, query_dim]
-                prev_alignment: [B, T_enc]
-        """
-        alignment = self.compute_energies(query, prev_alignment)
-        alignment = self.normalize_energies(alignment)
-
-        return alignment
+        return F.softmax(energy, dim=-1)
