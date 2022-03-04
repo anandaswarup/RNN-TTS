@@ -46,8 +46,6 @@ tts_model = {
         "lstm_dropout": 0.1,
         "reduction_factor": 2,
     },
-    # Post Processing Network
-    "postnet": {"n_conv_layers": 5, "n_conv_filters": 512, "conv_filter_size": 5, "conv_dropout": 0.5,},
 }
 
 tts_training = {
