@@ -1,4 +1,4 @@
-"""Preprocess dataset and split into train/val/test splits"""
+"""Preprocess dataset and split into train/test splits"""
 
 import argparse
 import os
@@ -17,15 +17,10 @@ def _split_dataset(items):
     np.random.shuffle(items)
     test_split_size = int(len(items) * 0.01)
 
-    train_val_split = items[test_split_size:]
+    train_split = items[test_split_size:]
     test_split = items[:test_split_size]
 
-    np.random.shuffle(train_val_split)
-    val_split_size = int(len(train_val_split) * 0.01)
-    train_split = train_val_split[val_split_size:]
-    val_split = train_val_split[:val_split_size]
-
-    return train_split, val_split, test_split
+    return train_split, test_split
 
 
 def _compute_melspectrogram(wav):
@@ -112,7 +107,7 @@ def preprocess_dataset(root_dir, out_dir):
             items.append([text, wav_path])
 
     # Split into train/test sets
-    train_items, val_items, test_items = _split_dataset(items)
+    train_items, test_items = _split_dataset(items)
 
     # Process the train split
     print("Processing train split")
@@ -137,30 +132,6 @@ def preprocess_dataset(root_dir, out_dir):
         num_frames = _process_utterance(wav, filename, train_mel_dir, train_qwav_dir)
         train_metadata.append((filename, text, num_frames))
     write_metadata(train_metadata, os.path.join(out_dir, "train/metadata.csv"))
-
-    # Process the validation split
-    print("Processing val split")
-
-    val_mel_dir = os.path.join(out_dir, "val", "mel")
-    val_qwav_dir = os.path.join(out_dir, "val", "qwav")
-
-    os.makedirs(val_mel_dir, exist_ok=True)
-    os.makedirs(val_qwav_dir, exist_ok=True)
-
-    val_metadata = []
-    for text, wav_path in val_items:
-        # Get filename of file being processed
-        filename = os.path.splitext(os.path.basename(wav_path))[0]
-
-        # Load wav file from disk
-        wav, _ = librosa.load(wav_path, sr=cfg.audio["sampling_rate"])
-
-        # Get length of wav file in seconds
-        # wav_length = len(wav) / cfg.audio["sampling_rate"]
-
-        num_frames = _process_utterance(wav, filename, val_mel_dir, val_qwav_dir)
-        val_metadata.append((filename, text, num_frames))
-    write_metadata(val_metadata, os.path.join(out_dir, "val/metadata.csv"))
 
     # Process the test split
     print("Processing test split")
