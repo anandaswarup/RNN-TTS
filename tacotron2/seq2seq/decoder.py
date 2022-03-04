@@ -71,7 +71,7 @@ class Decoder(nn.Module):
         """
         B, T_enc, _ = memory.size()
 
-        self.alignment = F.one_hot(torch.zeros([B], dtype=torch.long, device=memory.device), self.memory_dim).float()
+        self.alignment = F.one_hot(torch.zeros([B], dtype=torch.long, device=memory.device), T_enc).float()
         self.attention_context = torch.zeros([B, self.memory_dim], device=memory.device)
 
         self.attn_lstm_hx = [
