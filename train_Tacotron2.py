@@ -162,9 +162,9 @@ def train_model(data_dir, checkpoint_dir, alignment_dir, resume_checkpoint_path)
                 save_checkpoint(checkpoint_dir, model, optimizer, scaler, scheduler, global_step)
 
                 # Log alignment
-                idx = random.randint(0, alignments.size(0) - 1)
+                index = random.randint(0, alignments.size(0) - 1)
                 alignment = alignments[
-                    idx, : text_lengths[idx], : mel_lengths[idx] // cfg.tts_model["decoder"]["reduction_factor"]
+                    index, : text_lengths[index], : mel_lengths[index] // cfg.tts_model["decoder"]["reduction_factor"]
                 ]
                 alignment = alignment.detach().cpu().numpy()
                 alignment_path = os.path.join(alignment_dir, f"model_step{global_step:09d}.png")
