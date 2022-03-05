@@ -167,7 +167,7 @@ def train_model(data_dir, checkpoint_dir, alignment_dir, resume_checkpoint_path)
                     idx, : text_lengths[idx], : mel_lengths[idx] // cfg.tts_model["decoder"]["reduction_factor"]
                 ]
                 alignment = alignment.detach().cpu().numpy()
-                alignment_path = os.path.join(alignment_dir, f"model_step{global_step:09d}.pth")
+                alignment_path = os.path.join(alignment_dir, f"model_step{global_step:09d}.png")
                 log_alignment(alignment, alignment_path)
 
         # Log training parameters
