@@ -121,7 +121,7 @@ class TextMelDataset(Dataset):
         if len(mels[0]) % self.reduction_factor != 0:
             mels[0] = F.pad(mels[0], (0, 0, 0, self.reduction_factor - 1))
 
-        mel_lengths = [len(mel) for mel in texts]
+        mel_lengths = [len(mel) for mel in mels]
         text_lengths = [len(text) for text in texts]
 
         texts = pad_sequence(texts, batch_first=True, padding_value=_symbol_to_id["_PAD_"])
