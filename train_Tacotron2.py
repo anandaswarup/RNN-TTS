@@ -92,7 +92,7 @@ def prepare_dataloaders(data_dir):
         data_dir=os.path.join(data_dir, "val"), reduction_factor=cfg.tts_model["decoder"]["reduction_factor"]
     )
     val_dataloader = DataLoader(
-        datdaset=val_dataset,
+        dataset=val_dataset,
         batch_size=32,
         shuffle=False,
         num_workers=1,
