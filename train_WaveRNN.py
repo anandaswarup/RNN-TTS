@@ -46,13 +46,12 @@ def load_checkpoint(checkpoint_path, model, optimizer, scaler, scheduler):
     return checkpoint["step"]
 
 
-def prepare_dataloader(data_dir):
-    """Prepare the dataloader
+def prepare_dataloaders(data_dir):
+    """Prepare the dataloaders
     """
-    dataset = WaveRNNDataset(os.path.join(data_dir, "train"))
-
-    dataloader = DataLoader(
-        dataset,
+    train_dataset = WaveRNNDataset(os.path.join(data_dir, "train"))
+    train_dataloader = DataLoader(
+        dataset=train_dataset,
         batch_size=cfg.vocoder_training["batch_size"],
         shuffle=True,
         num_workers=1,
@@ -60,7 +59,31 @@ def prepare_dataloader(data_dir):
         drop_last=True,
     )
 
-    return dataloader
+    val_dataset = WaveRNNDataset(os.path.join(data_dir, "val"))
+    val_dataloader = DataLoader(
+        dataset=val_dataset, batch_size=8, shuffle=False, num_workers=1, pin_memory=False, drop_last=True
+    )
+
+    return train_dataloader, val_dataloader
+
+
+def validate(model, device, val_dataloader, global_step):
+    """Validate the model
+    """
+    model.eval()
+    with torch.no_grad:
+        val_loss = 0.0
+        for idx, (mels, qwavs) in enumerate(val_dataloader, 1):
+            mels, qwavs = mels.to(device), qwavs.to(device)
+
+            wav_hat = model(qwavs[:, :-1], mels)
+            loss = F.cross_entropy(wav_hat.transpose(1, 2).contiguous(), qwavs[:, 1:])
+
+            val_loss += loss.item()
+        val_loss = val_loss / (idx + 1)
+    model.train()
+
+    print(f"Val Loss: {val_loss:.6f}", flush=True)
 
 
 def train_model(data_dir, checkpoint_dir, resume_checkpoint_path=None):
@@ -89,7 +112,7 @@ def train_model(data_dir, checkpoint_dir, resume_checkpoint_path=None):
     )
 
     # Instantiate the dataloader
-    dataloader = prepare_dataloader(data_dir)
+    train_dataloader, val_dataloader = prepare_dataloaders(data_dir)
 
     # Load checkpoint and resume training from that point (if specified)
     if resume_checkpoint_path is not None:
@@ -97,13 +120,15 @@ def train_model(data_dir, checkpoint_dir, resume_checkpoint_path=None):
     else:
         global_step = 0
 
-    n_epochs = cfg.vocoder_training["n_steps"] // len(dataloader) + 1
-    start_epoch = global_step // len(dataloader) + 1
+    n_epochs = cfg.vocoder_training["n_steps"] // len(train_dataloader) + 1
+    start_epoch = global_step // len(train_dataloader) + 1
+
+    model.train()
 
     # Main training loop
     for epoch in range(start_epoch, n_epochs + 1):
-        avg_loss = 0
-        for idx, (mels, qwavs) in enumerate(dataloader, 1):
+        print(f"Epoch: {epoch}", flush=True)
+        for _, (mels, qwavs) in enumerate(train_dataloader, 1):
             mels, qwavs = mels.to(device), qwavs.to(device)
 
             model.zero_grad()
@@ -127,16 +152,13 @@ def train_model(data_dir, checkpoint_dir, resume_checkpoint_path=None):
 
             global_step += 1
 
-            # Update the average loss
-            avg_loss += (loss.item() - avg_loss) / idx
+            print(
+                f"Step: {global_step}, Loss: {loss.item():.6f}, LR: {scheduler.get_last_lr()}", flush=True,
+            )
 
             if global_step % cfg.vocoder_training["checkpoint_interval"] == 0:
+                validate(model, device, val_dataloader, global_step)
                 save_checkpoint(checkpoint_dir, model, optimizer, scaler, scheduler, global_step)
-
-        # Log training parameters
-        print(
-            f"Epoch: {epoch}, loss: {avg_loss:.6f}, Current LR: {scheduler.get_last_lr()}", flush=True,
-        )
 
 
 if __name__ == "__main__":
