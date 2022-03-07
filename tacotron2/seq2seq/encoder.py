@@ -16,19 +16,12 @@ class Encoder(nn.Module):
 
         # Convolutional layers
         conv_filters = [embedding_dim] + [n_conv_filters] * n_conv_layers
-        conv_activations = [nn.ReLU()] * n_conv_layers
         self.convs = nn.ModuleList(
             [
                 ConvBatchNorm(
-                    in_filters,
-                    out_filters,
-                    kernel_size=conv_filter_size,
-                    bias=True,
-                    dropout=conv_dropout,
-                    activation=act,
-                    w_init_gain="relu",
+                    in_filters, out_filters, kernel_size=conv_filter_size, dropout=conv_dropout, activation=nn.ReLU()
                 )
-                for in_filters, out_filters, act in zip(conv_filters, conv_filters[1:], conv_activations)
+                for in_filters, out_filters in zip(conv_filters, conv_filters[1:])
             ]
         )
 
