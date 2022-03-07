@@ -3,7 +3,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
-from tacotron2.layers.common import PreNet, Linear
+from tacotron2.layers.common import PreNet
 from tacotron2.layers.dca import DynamicConvolutionAttention
 
 
@@ -64,7 +64,7 @@ class Decoder(nn.Module):
         self.decoder_lstm = nn.LSTMCell(attn_lstm_size + memory_dim, decoder_lstm_size)
 
         # Output Layer
-        self.acoustic_layer = Linear(decoder_lstm_size + memory_dim, n_mels * reduction_factor, bias=True)
+        self.acoustic_layer = nn.Linear(decoder_lstm_size + memory_dim, n_mels * reduction_factor, bias=True)
 
     def _init_decoder_states(self, memory):
         """Initialize the decoder states
