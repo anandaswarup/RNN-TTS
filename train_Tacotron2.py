@@ -64,26 +64,70 @@ def log_alignment(alignment, path):
     plt.savefig(path)
 
 
-def prepare_dataloader(data_dir):
+def prepare_dataloaders(data_dir):
     """Prepare the dataloaders
     """
-    # Setup dataset
-    dataset = TextMelDataset(
+    # Train dataloader
+    train_dataset = TextMelDataset(
         data_dir=os.path.join(data_dir, "train"), reduction_factor=cfg.tts_model["decoder"]["reduction_factor"]
     )
-    sampler = samplers.RandomSampler(dataset)
+    sampler = samplers.RandomSampler(train_dataset)
     batch_sampler = BucketBatchSampler(
         sampler=sampler,
         batch_size=cfg.tts_training["batch_size"],
         drop_last=True,
-        sort_key=dataset.sort_key,
+        sort_key=train_dataset.sort_key,
         bucket_size_multiplier=cfg.tts_training["bucket_size_multiplier"],
     )
-    dataloader = DataLoader(
-        dataset=dataset, batch_sampler=batch_sampler, collate_fn=dataset.pad_collate, num_workers=8, pin_memory=True,
+    train_dataloader = DataLoader(
+        dataset=train_dataset,
+        batch_sampler=batch_sampler,
+        collate_fn=train_dataset.pad_collate,
+        num_workers=8,
+        pin_memory=True,
     )
 
-    return dataloader
+    # Validation dataloader
+    val_dataset = TextMelDataset(
+        data_dir=os.path.join(data_dir, "val"), reduction_factor=cfg.tts_model["decoder"]["reduction_factor"]
+    )
+    val_dataloader = DataLoader(
+        datdaset=val_dataset,
+        batch_size=32,
+        shuffle=False,
+        num_workers=1,
+        collate_fn=val_dataset.pad_collate,
+        pin_memory=False,
+        drop_last=True,
+    )
+
+    return train_dataloader, val_dataloader
+
+
+def validate(model, val_dataloader, global_step, alignment_dir):
+    """Validate the model
+    """
+    model.eval()
+    with torch.no_grad():
+        val_loss = 0.0
+        for idx, (texts, text_lengths, mels, mel_lengths) in enumerate(val_dataloader):
+            output_mels, alignments = model(texts, mels)
+            loss = F.mse_loss(output_mels[:, :, : mels.size(-1)], mels)
+
+            val_loss += loss.item()
+        val_loss = val_loss / (idx + 1)
+    model.train()
+
+    print(f"Val Loss: {val_loss:.6f}", flush=True)
+
+    # Log alignment
+    index = random.randint(0, alignments.size(0) - 1)
+    alignment = alignments[
+        index, : text_lengths[index], : mel_lengths[index] // cfg.tts_model["decoder"]["reduction_factor"]
+    ]
+    alignment = alignment.detach().cpu().numpy()
+    alignment_path = os.path.join(alignment_dir, f"model_step{global_step:09d}.png")
+    log_alignment(alignment, alignment_path)
 
 
 def train_model(data_dir, checkpoint_dir, alignment_dir, resume_checkpoint_path):
@@ -113,7 +157,7 @@ def train_model(data_dir, checkpoint_dir, alignment_dir, resume_checkpoint_path)
     )
 
     # Instantiate the dataloader
-    dataloader = prepare_dataloader(data_dir)
+    train_dataloader, val_dataloader = prepare_dataloaders(data_dir)
 
     # Load checkpoint and resume training from that point (if specified)
     if resume_checkpoint_path is not None:
@@ -121,20 +165,22 @@ def train_model(data_dir, checkpoint_dir, alignment_dir, resume_checkpoint_path)
     else:
         global_step = 0
 
-    n_epochs = cfg.tts_training["n_steps"] // len(dataloader) + 1
-    start_epoch = global_step // len(dataloader) + 1
+    n_epochs = cfg.tts_training["n_steps"] // len(train_dataloader) + 1
+    start_epoch = global_step // len(train_dataloader) + 1
+
+    model.train()
 
     # Main training loop
     for epoch in range(start_epoch, n_epochs + 1):
-        avg_loss = 0
-        for idx, (texts, text_lengths, mels, mel_lengths) in enumerate(dataloader, 1):
+        print(f"Epoch: {epoch}", flush=True)
+        for _, (texts, _, mels, _) in enumerate(train_dataloader, 1):
             texts, mels = texts.to(device), mels.to(device)
 
             model.zero_grad()
 
             # Forward pass and loss computation
             with amp.autocast():
-                output_mels, alignments = model(texts, mels)
+                output_mels, _ = model(texts, mels)
                 loss = F.mse_loss(output_mels[:, :, : mels.size(-1)], mels)
 
             # Gradient computation
@@ -142,7 +188,7 @@ def train_model(data_dir, checkpoint_dir, alignment_dir, resume_checkpoint_path)
 
             # Gradient clipping
             scaler.unscale_(optimizer)
-            torch.nn.utils.clip_grad_norm_(model.parameters(), cfg.tts_training["clip_grad_norm"])
+            grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), cfg.tts_training["clip_grad_norm"])
 
             # Weights update
             scaler.step(optimizer)
@@ -155,25 +201,14 @@ def train_model(data_dir, checkpoint_dir, alignment_dir, resume_checkpoint_path)
 
             global_step += 1
 
-            # Update the average loss
-            avg_loss += (loss.item() - avg_loss) / idx
+            print(
+                f"Step: {global_step}, Loss: {loss.item():.6f}, Grad: {grad_norm:.6f}, LR: {scheduler.get_last_lr()}",
+                flush=True,
+            )
 
             if global_step % cfg.tts_training["checkpoint_interval"] == 0:
+                validate(model, val_dataloader, global_step, alignment_dir)
                 save_checkpoint(checkpoint_dir, model, optimizer, scaler, scheduler, global_step)
-
-                # Log alignment
-                index = random.randint(0, alignments.size(0) - 1)
-                alignment = alignments[
-                    index, : text_lengths[index], : mel_lengths[index] // cfg.tts_model["decoder"]["reduction_factor"]
-                ]
-                alignment = alignment.detach().cpu().numpy()
-                alignment_path = os.path.join(alignment_dir, f"model_step{global_step:09d}.png")
-                log_alignment(alignment, alignment_path)
-
-        # Log training parameters
-        print(
-            f"Epoch: {epoch}, loss: {avg_loss:.6f}, Current LR: {scheduler.get_last_lr()}", flush=True,
-        )
 
 
 if __name__ == "__main__":
