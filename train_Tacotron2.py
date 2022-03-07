@@ -104,13 +104,15 @@ def prepare_dataloaders(data_dir):
     return train_dataloader, val_dataloader
 
 
-def validate(model, val_dataloader, global_step, alignment_dir):
+def validate(model, device, val_dataloader, global_step, alignment_dir):
     """Validate the model
     """
     model.eval()
     with torch.no_grad():
         val_loss = 0.0
         for idx, (texts, text_lengths, mels, mel_lengths) in enumerate(val_dataloader):
+            texts, mels = texts.to(device), mels.to(device)
+            
             output_mels, alignments = model(texts, mels)
             loss = F.mse_loss(output_mels[:, :, : mels.size(-1)], mels)
 
@@ -207,7 +209,7 @@ def train_model(data_dir, checkpoint_dir, alignment_dir, resume_checkpoint_path)
             )
 
             if global_step % cfg.tts_training["checkpoint_interval"] == 0:
-                validate(model, val_dataloader, global_step, alignment_dir)
+                validate(model, device, val_dataloader, global_step, alignment_dir)
                 save_checkpoint(checkpoint_dir, model, optimizer, scaler, scheduler, global_step)
 
 
