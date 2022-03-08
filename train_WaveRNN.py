@@ -71,7 +71,7 @@ def validate(model, device, val_dataloader, global_step):
     """Validate the model
     """
     model.eval()
-    with torch.no_grad:
+    with torch.no_grad():
         val_loss = 0.0
         for idx, (mels, qwavs) in enumerate(val_dataloader, 1):
             mels, qwavs = mels.to(device), qwavs.to(device)
