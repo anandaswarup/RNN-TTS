@@ -67,7 +67,7 @@ def prepare_dataloaders(data_dir):
     return train_dataloader, val_dataloader
 
 
-def validate(model, device, val_dataloader, global_step):
+def validate(model, device, val_dataloader):
     """Validate the model
     """
     model.eval()
@@ -157,7 +157,7 @@ def train_model(data_dir, checkpoint_dir, resume_checkpoint_path=None):
             )
 
             if global_step % cfg.vocoder_training["checkpoint_interval"] == 0:
-                validate(model, device, val_dataloader, global_step)
+                validate(model, device, val_dataloader)
                 save_checkpoint(checkpoint_dir, model, optimizer, scaler, scheduler, global_step)
 
 
