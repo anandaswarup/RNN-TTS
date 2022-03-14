@@ -1,12 +1,13 @@
 """Tacotron2 model"""
 
-import torch.nn as nn
 from math import sqrt
-from tacotron2.seq2seq.encoder import Encoder
-from tacotron2.seq2seq.decoder import Decoder
 
 import config as cfg
+import torch.nn as nn
 from text.en.processor import _symbol_to_id
+
+from tacotron2.seq2seq.decoder import Decoder
+from tacotron2.seq2seq.encoder import Encoder
 
 
 class Tacotron2(nn.Module):
@@ -65,7 +66,7 @@ class Tacotron2(nn.Module):
 
         return output_mels, alignments
 
-    def generation(self, texts):
+    def generate(self, texts):
         """Generate mels from text
         """
         embedded_texts = self.embedding_layer(texts)
