@@ -93,7 +93,7 @@ class WaveRNNModel(nn.Module):
         mel = F.interpolate(mel.transpose(1, 2).contiguous(), scale_factor=self.hop_length)
         mel = mel.transpose(1, 2).contiguous()
 
-        h = torch.zeros(mel.size(0), self.rnn_size, device=mel.device)
+        h = torch.zeros(mel.size(0), cfg.vocoder_model["rnn_size"], device=mel.device)
         x = torch.zeros(mel.size(0), device=mel.device, dtype=torch.long)
         x = x.fill_(2 ** (self.num_bits - 1))
 
