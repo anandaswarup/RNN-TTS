@@ -1,8 +1,8 @@
 """Tacotron2 seq2seq Decoder"""
 
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch
 from tacotron2.layers.common import PreNet
 from tacotron2.layers.dca import DynamicConvolutionAttention
 
@@ -162,7 +162,7 @@ class Decoder(nn.Module):
             mel_frame = output_mels[-1][:, :, -1] if t > 0 else go_frame
             output_mel_frame, attention_weights = self.step(mel_frame, memory)
 
-            if torch.all(mel_frame[:, :, -1] > stop_threshold):
+            if torch.all(output_mel_frame[:, :, -1] > stop_threshold):
                 break
 
             output_mels.append(output_mel_frame)
