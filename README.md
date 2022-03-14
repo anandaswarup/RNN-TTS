@@ -57,7 +57,7 @@ All audio processing parameters, model hyperparameters, training configuration e
 2. Text to speech synthesis
  
     ```python
-    python tts_synthesis.py \
+    python tts_Synthesis.py \
             --synthesis_file <Path to the synthesis.txt file (created in Step 1)> \
             --Tacotron2_checkpoint <Path to the trained Tacotron2 model to use for synthesis> \
             --WaveRNN_checkpoint <Path to the trained WaveRNN model to use for synthesis> \
