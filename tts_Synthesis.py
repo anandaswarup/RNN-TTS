@@ -62,7 +62,7 @@ def synthesize(synthesis_file, tacotron2_checkpoint, waveRNN_checkpoint, out_dir
 
     # Synthesis loop
     for file_id, text in synthesis_instances:
-        print(f"Synthesizing {file_id}")
+        print(f"Synthesizing {file_id}", flush=True)
 
         # Convert text to sequence of IDs corresponding the symbols present in the text
         text_seq = torch.LongTensor(text_to_sequence(text)).unsqueeze(0)
@@ -74,7 +74,7 @@ def synthesize(synthesis_file, tacotron2_checkpoint, waveRNN_checkpoint, out_dir
             wav_hat = waveRNN_model.generate(mel.transpose(1, 2).contiguous())
 
         # Write the synthesized wav file to disk
-        wav_path = os.path.join(out_dir, f"{file_id}-tacotron2_{tacotron2_step}-WaveRNN_{waveRNN_step}.wav")
+        wav_path = os.path.join(out_dir, f"{file_id}-tacotron2_{tacotron2_step}steps-WaveRNN_{waveRNN_step}steps.wav")
         sf.write(wav_path, wav_hat, cfg.audio["sampling_rate"])
 
 
