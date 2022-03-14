@@ -95,7 +95,7 @@ class WaveRNNModel(nn.Module):
 
         h = torch.zeros(mel.size(0), cfg.vocoder_model["rnn_size"], device=mel.device)
         x = torch.zeros(mel.size(0), device=mel.device, dtype=torch.long)
-        x = x.fill_(2 ** (self.num_bits - 1))
+        x = x.fill_(2 ** (cfg.audio["n_bits"] - 1))
 
         for mel_frame in torch.unbind(mel, dim=1):
             # Audio embedding
@@ -116,6 +116,6 @@ class WaveRNNModel(nn.Module):
             wav.append(x.item())
 
         wav = np.asarray(wav, dtype=np.int)
-        wav = librosa.mu_expand(wav - 2 ** (self.num_bits - 1), mu=2 ** self.num_bits - 1)
+        wav = librosa.mu_expand(wav - 2 ** (cfg.audio["n_bits"] - 1), mu=2 ** cfg.audio["n_bits"] - 1)
 
         return wav
