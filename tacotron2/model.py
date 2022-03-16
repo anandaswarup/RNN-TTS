@@ -4,7 +4,7 @@ from math import sqrt
 
 import config as cfg
 import torch.nn as nn
-from text.en.processor import _symbol_to_id
+from text.en.processor import symbol_to_id
 
 from tacotron2.seq2seq.decoder import Decoder
 from tacotron2.seq2seq.encoder import Encoder
@@ -21,9 +21,9 @@ class Tacotron2(nn.Module):
 
         # Embedding layer
         self.embedding_layer = nn.Embedding(
-            len(_symbol_to_id), cfg.tts_model["embedding_dim"], padding_idx=_symbol_to_id["_PAD_"]
+            len(symbol_to_id), cfg.tts_model["embedding_dim"], padding_idx=symbol_to_id["_PAD_"]
         )
-        std = sqrt(2.0 / (len(_symbol_to_id) + cfg.tts_model["embedding_dim"]))
+        std = sqrt(2.0 / (len(symbol_to_id) + cfg.tts_model["embedding_dim"]))
         val = sqrt(3.0) * std
         self.embedding_layer.weight.data.uniform_(-val, val)
 
