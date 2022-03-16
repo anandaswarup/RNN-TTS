@@ -8,7 +8,7 @@ import torch
 
 import config as cfg
 from tacotron2.model import Tacotron2
-from text.en.processor import text_to_sequence
+from text.en.processor import load_cmudict, text_to_sequence
 from wavernn.model import WaveRNNModel
 
 
@@ -60,12 +60,15 @@ def synthesize(synthesis_file, tacotron2_checkpoint, waveRNN_checkpoint, out_dir
     # Get the synthesis instances
     synthesis_instances = _load_synthesis_instances(synthesis_file)
 
+    # Load the cmu pronunciation dictionary
+    cmudict = load_cmudict()
+
     # Synthesis loop
     for file_id, text in synthesis_instances:
         print(f"Synthesizing {file_id}", flush=True)
 
         # Convert text to sequence of IDs corresponding the symbols present in the text
-        text_seq = torch.LongTensor(text_to_sequence(text)).unsqueeze(0)
+        text_seq = torch.LongTensor(text_to_sequence(text, cmudict)).unsqueeze(0)
         text_seq = text_seq.to(device)
 
         # Synthesize audio
