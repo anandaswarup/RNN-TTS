@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import torch.utils.data.sampler as samplers
-from text.en.processor import _symbol_to_id, text_to_sequence
+from text.en.processor import load_cmudict, symbol_to_id, text_to_sequence
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Dataset
 
@@ -94,6 +94,7 @@ class TextMelDataset(Dataset):
         """
         self.reduction_factor = reduction_factor
         self.instances, self.lengths = _load_dataset_instances(data_dir)
+        self.cmudict = load_cmudict()
 
     def __len__(self):
         return len(self.instances)
@@ -102,7 +103,7 @@ class TextMelDataset(Dataset):
         melpath, text = self.instances[idx][0], self.instances[idx][1]
 
         mel = np.load(melpath)
-        text_seq = text_to_sequence(text)
+        text_seq = text_to_sequence(text, self.cmudict)
 
         return (torch.LongTensor(text_seq), torch.FloatTensor(mel).transpose_(0, 1).contiguous())
 
@@ -124,7 +125,7 @@ class TextMelDataset(Dataset):
         mel_lengths = [len(mel) for mel in mels]
         text_lengths = [len(text) for text in texts]
 
-        texts = pad_sequence(texts, batch_first=True, padding_value=_symbol_to_id["_PAD_"])
+        texts = pad_sequence(texts, batch_first=True, padding_value=symbol_to_id["_PAD_"])
         mels = pad_sequence(mels, batch_first=True)
 
         return texts, text_lengths, mels.transpose_(1, 2).contiguous(), mel_lengths
