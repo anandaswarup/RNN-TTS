@@ -1,6 +1,6 @@
 # Recurrent Neural Network based Text-to-Speech systems
 
-This repository contains code to train a End-to-End Speech Synthesis system, based on the Tacotron2 model with modifications as described in [Location Relative Attention Mechanisms for Robust Long-Form Speech Synthesis](https://arxiv.org/pdf/1910.10288.pdf).
+This repository contains code to train a End-to-End Speech Synthesis system, based on the Tacotron2 model with modifications as described in [Location Relative Attention Mechanisms for Robust Long-Form Speech Synthesis](https://arxiv.org/pdf/1910.10288.pdf). Currently only English is supported in this codebase.
  
 The system consists of two parts:
 
