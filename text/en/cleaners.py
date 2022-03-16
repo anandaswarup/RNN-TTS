@@ -76,6 +76,9 @@ def replace_symbols(text):
     text = text.replace("]", ",")
     text = text.replace(" [", ", ")
 
+    # Ensure that text ends with only . ? or !
+    text = re.sub(r"[^?.!]$", r".", text)
+
     return text
 
 
