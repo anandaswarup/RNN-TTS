@@ -51,7 +51,7 @@ tts_model = {
 tts_training = {
     "batch_size": 128,
     "bucket_size_multiplier": 5,
-    "n_steps": 300000,
+    "n_steps": 250000,
     "checkpoint_interval": 10000,
     "lr": 1e-3,
     "lr_scheduler_milestones": [20000, 40000, 100000, 150000, 200000],
@@ -69,7 +69,7 @@ vocoder_model = {
 
 vocoder_training = {
     "batch_size": 32,
-    "n_steps": 300000,
+    "n_steps": 250000,
     "sample_frames": 24,
     "lr": 4e-4,
     "lr_scheduler_step_size": 25000,
