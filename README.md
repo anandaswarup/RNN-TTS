@@ -13,7 +13,7 @@ All audio processing parameters, model hyperparameters, training configuration e
 # Quick start
 ## Train TTS from scratch
 1. Download and extract the dataset
-   - The assumption made is that the dataset is in the same format as the [LJSpeech dataset](https://keithito.com/LJ-Speech-Dataset/)
+    The assumption made is that the dataset to be used for training is in the same format as the [LJSpeech dataset](https://keithito.com/LJ-Speech-Dataset/)
 
 2. Preprocess the downloaded dataset; perform feature extraction on the wav files and create train/val/eval splits
 
