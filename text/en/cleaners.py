@@ -77,7 +77,10 @@ def replace_symbols(text):
     text = text.replace(" [", ", ")
 
     # Ensure that text ends with only . ? or !
-    text = re.sub(r"[^?.!]$", r".", text)
+    if text[-1] not in ("?", ".", "!", ","):
+        text = text + "."
+    elif text[-1] == ",":
+        text = text[:-1] + "."
 
     return text
 
