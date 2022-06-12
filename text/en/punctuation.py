@@ -107,7 +107,7 @@ class Punctuation:
 
     @puncs.setter
     def puncs(self, value):
-        self._puncs = "".join(list(dict.fromkeys(list(value))))  # remove duplicates without changing the oreder
+        self._puncs = "".join(list(dict.fromkeys(list(value))))  # remove duplicates without changing the order
         self.puncs_regular_exp = re.compile(rf"(\s*[{re.escape(self._puncs)}]+\s*)+")
 
     def strip(self, text):
