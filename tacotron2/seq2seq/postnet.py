@@ -8,6 +8,7 @@ from tacotron2.layers.common import ConvBatchNorm
 class PostNet(nn.Module):
     """Post Processing Network
     """
+
     def __init__(self, n_mels, n_conv_layers, n_conv_filters, conv_filter_size, conv_dropout):
         """Instantiate the PostNet
         """
@@ -34,5 +35,5 @@ class PostNet(nn.Module):
         """
         for conv in self.convs:
             x = conv(x)
-        
+
         return x
