@@ -7,6 +7,7 @@ audio = {
     "sampling_rate": 22050,
     "max_db": 100,
     "ref_db": 20,
+    "trim_db": 45,
     "n_fft": 2048,
     "win_length": 1100,  # 50 ms window length
     "hop_length": 275,  # 12.5 ms frame shift
