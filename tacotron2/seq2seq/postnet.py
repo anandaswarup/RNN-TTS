@@ -15,7 +15,7 @@ class PostNet(nn.Module):
         super().__init__()
 
         # Convolutional layers
-        conv_filters = [n_mels] + [n_conv_filters] * n_conv_layers
+        conv_filters = [n_mels] + [n_conv_filters] * (n_conv_layers - 1) + [n_mels]
         conv_activations = [nn.Tanh()] * (n_conv_layers - 1) + [None]
         self.convs = nn.ModuleList(
             [
