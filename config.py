@@ -7,6 +7,7 @@ audio = {
     "sampling_rate": 22050,
     "max_db": 100,
     "ref_db": 20,
+    "trim_db": 45,
     "n_fft": 2048,
     "win_length": 1100,  # 50 ms window length
     "hop_length": 275,  # 12.5 ms frame shift
@@ -46,6 +47,8 @@ tts_model = {
         "lstm_dropout": 0.1,
         "reduction_factor": 2,
     },
+    # Post Processing Network
+    "postnet": {"n_conv_layers": 5, "n_conv_filters": 512, "conv_filter_size": 5, "conv_dropout": 0.5,},
 }
 
 tts_training = {

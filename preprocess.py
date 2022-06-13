@@ -7,6 +7,7 @@ import librosa
 import numpy as np
 
 import config as cfg
+from audio import compute_melspectrogram, load_wav, mulaw_compression
 
 
 def _split_dataset(items):
@@ -27,58 +28,14 @@ def _split_dataset(items):
     return train_split, val_split, test_split
 
 
-def _compute_melspectrogram(wav):
-    """Compute the mel-spectrogram
-    """
-    # Apply pre-emphasis
-    wav = librosa.effects.preemphasis(wav, coef=0.97)
-
-    # Compute the mel spectrogram
-    mel = librosa.feature.melspectrogram(
-        y=wav,
-        sr=cfg.audio["sampling_rate"],
-        hop_length=cfg.audio["hop_length"],
-        win_length=cfg.audio["win_length"],
-        n_fft=cfg.audio["n_fft"],
-        n_mels=cfg.audio["n_mels"],
-        fmin=cfg.audio["fmin"],
-        norm=1,
-        power=1,
-    )
-
-    # Convert to log scale
-    mel = librosa.core.amplitude_to_db(mel, top_db=None) - cfg.audio["ref_db"]
-
-    # Normalize
-    mel = np.maximum(mel, -cfg.audio["max_db"])
-    mel = mel / cfg.audio["max_db"]
-
-    return mel
-
-
-def _mulaw_compression(wav):
-    """Compress the waveform using mu-law compression
-    """
-    wav = np.pad(wav, (cfg.audio["win_length"] // 2,), mode="reflect")
-    wav = wav[: ((wav.shape[0] - cfg.audio["win_length"]) // cfg.audio["hop_length"] + 1) * cfg.audio["hop_length"]]
-
-    wav = 2 ** (cfg.audio["n_bits"] - 1) + librosa.mu_compress(wav, mu=2 ** cfg.audio["n_bits"] - 1)
-
-    return wav
-
-
-def _process_utterance(wav, filename, mel_dir, qwav_dir):
+def _process_wav(wav, filename, mel_dir, qwav_dir):
     """Process a single wav file
     """
-    peak = np.abs(wav).max()
-    if peak >= 1:
-        wav = wav / peak * 0.999
-
     # Compute mel spectrogram
-    mel = _compute_melspectrogram(wav)
+    mel = compute_melspectrogram(wav)
 
     # Quantize the wavform
-    qwav = _mulaw_compression(wav)
+    qwav = mulaw_compression(wav)
 
     # Save to disk
     mel_path = os.path.join(mel_dir, filename + ".npy")
@@ -96,6 +53,24 @@ def write_metadata(metadata, out_file):
     with open(out_file, "w") as file_writer:
         for m in metadata:
             file_writer.write("|".join([str(x) for x in m]) + "\n")
+
+
+def process_dataset_split(items, mel_dir, qwav_dir):
+    """Process the dataset split
+    """
+    metadata = []
+    for text, wav_path in items:
+        # Get filename being processed
+        filename = os.path.splitext(os.path.basename(wav_path))[0]
+
+        # Load wav file from disk
+        wav = load_wav(wav_path)
+
+        # Process the wav file
+        num_frames = _process_wav(wav, filename, mel_dir, qwav_dir)
+        metadata.append((filename, text, num_frames))
+
+    return metadata
 
 
 def preprocess_dataset(root_dir, out_dir):
@@ -122,16 +97,7 @@ def preprocess_dataset(root_dir, out_dir):
     os.makedirs(train_mel_dir, exist_ok=True)
     os.makedirs(train_qwav_dir, exist_ok=True)
 
-    train_metadata = []
-    for text, wav_path in train_items:
-        # Get filename of file being processed
-        filename = os.path.splitext(os.path.basename(wav_path))[0]
-
-        # Load wav file from disk
-        wav, _ = librosa.load(wav_path, sr=cfg.audio["sampling_rate"])
-
-        num_frames = _process_utterance(wav, filename, train_mel_dir, train_qwav_dir)
-        train_metadata.append((filename, text, num_frames))
+    train_metadata = process_dataset_split(train_items, train_mel_dir, train_qwav_dir)
     write_metadata(train_metadata, os.path.join(out_dir, "train/metadata.csv"))
 
     # Process the val split
@@ -143,16 +109,7 @@ def preprocess_dataset(root_dir, out_dir):
     os.makedirs(val_mel_dir, exist_ok=True)
     os.makedirs(val_qwav_dir, exist_ok=True)
 
-    val_metadata = []
-    for text, wav_path in val_items:
-        # Get filename of file being processed
-        filename = os.path.splitext(os.path.basename(wav_path))[0]
-
-        # Load wav file from disk
-        wav, _ = librosa.load(wav_path, sr=cfg.audio["sampling_rate"])
-
-        num_frames = _process_utterance(wav, filename, val_mel_dir, val_qwav_dir)
-        val_metadata.append((filename, text, num_frames))
+    val_metadata = process_dataset_split(val_items, val_mel_dir, val_qwav_dir)
     write_metadata(val_metadata, os.path.join(out_dir, "val/metadata.csv"))
 
     # Process the test split

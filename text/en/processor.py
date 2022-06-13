@@ -9,8 +9,8 @@ _pad = "_PAD_"
 _unk = "_UNK_"
 _bos = "_BOS_"
 _eos = "_EOS_"
-_wb = "#"
-_punctuation = "!,.?"
+_wb = "_BLNK_"
+_punctuation = "!-_/'()[],.:;?\""
 _english_characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 _cmudict_symbols = [
     "AA",
@@ -106,7 +106,15 @@ symbols = [_pad, _bos, _eos, _wb, _unk] + list(_punctuation) + list(_english_cha
 symbol_to_id = {symb: index for index, symb in enumerate(symbols)}
 
 # Regular expression for tokenizing text
-tokenizer_pattern = re.compile(r"[\w\{\}']+|[.,!?]")
+tokenizer_pattern = re.compile(r"[\w\{\}']+|[!-_/'(),.:;?\"]")
+# tokenizer_pattern = re.compile(rf"(\s*[{re.escape(_punctuation)}]+\s*)+")
+
+# Regular expression for dealing with alternate pronunciations in CMUDict
+alt_entry_pattern = re.compile(r"(?<=\w)\((\d)\)")
+
+
+def format_alt_entry(text):
+    return alt_entry_pattern.sub(r"{\1}", text)
 
 
 def tokenize_text(text):
@@ -119,7 +127,7 @@ def load_cmudict():
     with open("text/en/cmudict-0.7b.txt", encoding="ISO-8859-1") as file_reader:
         cmudict = (line.strip().split("  ") for line in islice(file_reader, 126, 133905))
 
-        cmudict = {word: pronunciation for word, pronunciation in cmudict}
+        cmudict = {format_alt_entry(word): pronunciation for word, pronunciation in cmudict}
 
     return cmudict
 
@@ -141,8 +149,7 @@ def parse_text(text, cmudict):
         else:
             text_seq.append(" ".join(char for char in word))
 
-        if word not in _punctuation:
-            text_seq.append(_wb)
+        text_seq.append(_wb)
 
     text_seq = [word.split(" ") for word in text_seq]
     text_seq = [char for word in text_seq for char in word]

@@ -72,7 +72,10 @@ class ConvBatchNorm(nn.Module):
     def forward(self, x):
         """Forward pass
         """
-        x = self.activation(self.batch_norm(self.conv_layer(x)))
+        if self.activation is not None:
+            x = self.activation(self.batch_norm(self.conv_layer(x)))
+        else:
+            x = self.batch_norm(self.conv_layer(x))
         x = F.dropout(x, p=self.dropout, training=self.training)
 
         return x

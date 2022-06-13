@@ -1,4 +1,4 @@
-"""Train the Tacotron model"""
+"""Train the Tacotron2 model"""
 
 import argparse
 import os
@@ -14,7 +14,6 @@ import torch.utils.data.sampler as samplers
 from torch.utils.data import DataLoader
 
 import config as cfg
-
 from tacotron2.data_utils import BucketBatchSampler, TextMelDataset
 from tacotron2.model import Tacotron2
 
@@ -112,9 +111,11 @@ def validate(model, device, val_dataloader, global_step, alignment_dir):
         val_loss = 0.0
         for idx, (texts, text_lengths, mels, mel_lengths) in enumerate(val_dataloader):
             texts, mels = texts.to(device), mels.to(device)
-            
-            output_mels, alignments = model(texts, mels)
-            loss = F.mse_loss(output_mels[:, :, : mels.size(-1)], mels)
+
+            postnet_output_mels, output_mels, alignments = model(texts, mels)
+            loss = F.mse_loss(postnet_output_mels[:, :, : mels.size(-1)], mels) + F.mse_loss(
+                output_mels[:, :, : mels.size(-1)], mels
+            )
 
             val_loss += loss.item()
         val_loss = val_loss / (idx + 1)
@@ -182,8 +183,10 @@ def train_model(data_dir, checkpoint_dir, alignment_dir, resume_checkpoint_path)
 
             # Forward pass and loss computation
             with amp.autocast():
-                output_mels, _ = model(texts, mels)
-                loss = F.mse_loss(output_mels[:, :, : mels.size(-1)], mels)
+                postnet_output_mels, output_mels, _ = model(texts, mels)
+                loss = F.mse_loss(postnet_output_mels[:, :, : mels.size(-1)], mels) + F.mse_loss(
+                    output_mels[:, :, : mels.size(-1)], mels
+                )
 
             # Gradient computation
             scaler.scale(loss).backward()
