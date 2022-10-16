@@ -13,8 +13,7 @@ from wavernn.model import WaveRNNModel
 
 
 def _load_synthesis_instances(synthesis_file):
-    """Load the training instances from disk
-    """
+    """Load the training instances from disk"""
     with open(synthesis_file, "r") as file_reader:
         synthesis_instances = file_reader.readlines()
 
@@ -26,8 +25,7 @@ def _load_synthesis_instances(synthesis_file):
 
 
 def load_trained_model(checkpoint_path, model):
-    """Load checkpoint from the specified path
-    """
+    """Load checkpoint from the specified path"""
     checkpoint = torch.load(checkpoint_path)
 
     model.load_state_dict(checkpoint["model"])
@@ -37,8 +35,7 @@ def load_trained_model(checkpoint_path, model):
 
 
 def synthesize(synthesis_file, tacotron2_checkpoint, waveRNN_checkpoint, out_dir):
-    """Synthesize text present in the synthesis file
-    """
+    """Synthesize text present in the synthesis file"""
     # Create directories
     os.makedirs(out_dir, exist_ok=True)
 
@@ -73,7 +70,7 @@ def synthesize(synthesis_file, tacotron2_checkpoint, waveRNN_checkpoint, out_dir
 
         # Synthesize audio
         with torch.no_grad():
-            mel, _ = tacotron2_model.generate(text_seq)
+            mel, _, _ = tacotron2_model.generate(text_seq)
             wav_hat = waveRNN_model.generate(mel.transpose(1, 2).contiguous())
 
         # Write the synthesized wav file to disk
